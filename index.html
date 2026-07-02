@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TGGuard - Telegram Security Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--tg:#2AABEE;--blue:#3b82f6;--dark:#1A1A2E;--bg:#0c0c15;--card:#13131e;--surface:#1a1a28;--text:#e4e4ed;--dim:#6b7280;--red:#ef4444;--green:#22c55e}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden}
+a{color:var(--tg);text-decoration:none}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes slideRight{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideLeft{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes scan{0%{width:0}100%{width:100%}}
+
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;position:relative}
+.hero::before{content:'';position:absolute;width:450px;height:450px;background:radial-gradient(circle,rgba(42,171,238,.1),transparent 70%);animation:pulse 4s ease-in-out infinite}
+.hero h1{font-size:clamp(2rem,5vw,3.8rem);background:linear-gradient(135deg,var(--tg),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:fadeInUp .8s ease-out both;margin-bottom:1rem}
+.hero p{color:var(--dim);max-width:500px;font-size:1.1rem;line-height:1.7;animation:fadeInUp .8s ease-out .2s both}
+.badge{display:inline-block;margin-top:1.5rem;padding:.5rem 1.5rem;border:1px solid var(--tg);border-radius:999px;font-size:.8rem;color:var(--tg);animation:fadeInUp .8s ease-out .4s both;font-family:'JetBrains Mono',monospace}
+
+.chat-section{max-width:700px;width:90%;margin:4rem auto;animation:fadeInUp .6s ease-out both}
+.chat-section h2{font-size:1.4rem;margin-bottom:1.5rem;text-align:center}
+.chat-window{background:var(--card);border:1px solid #1e1e2e;border-radius:16px;overflow:hidden}
+.chat-header{padding:1rem 1.5rem;background:var(--surface);border-bottom:1px solid #1e1e2e;display:flex;align-items:center;gap:.8rem}
+.chat-header .avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--tg),var(--blue));display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+.chat-header .name{font-weight:600;font-size:.95rem}
+.chat-header .status{font-size:.75rem;color:var(--green)}
+.chat-body{padding:1.2rem;display:flex;flex-direction:column;gap:.8rem;min-height:250px}
+.msg{max-width:80%;padding:.8rem 1rem;border-radius:14px;font-size:.88rem;line-height:1.5;animation:slideRight .5s ease-out both}
+.msg.right{align-self:flex-end;background:linear-gradient(135deg,#2AABEE,#229ED9);color:#fff;animation-name:slideLeft;border-bottom-right-radius:4px}
+.msg.left{align-self:flex-start;background:var(--surface);border:1px solid #2a2a3a;border-bottom-left-radius:4px}
+.msg .sender{font-size:.7rem;color:var(--dim);margin-bottom:.3rem}
+.msg.alert{border:1px solid var(--red);background:rgba(239,68,68,.08);animation-name:slideRight;align-self:flex-start}
+.alert-badge{display:inline-block;padding:.15rem .5rem;background:var(--red);color:#fff;border-radius:4px;font-size:.65rem;font-weight:700;margin-bottom:.4rem;text-transform:uppercase;letter-spacing:1px}
+
+.bot-section{max-width:700px;width:90%;margin:4rem auto;animation:fadeInUp .6s ease-out .2s both}
+.bot-section h2{font-size:1.4rem;margin-bottom:1.5rem;text-align:center}
+.bot-vis{background:var(--card);border:1px solid #1e1e2e;border-radius:16px;padding:2rem}
+.bot-row{display:flex;align-items:center;gap:1rem;padding:.8rem 0;border-bottom:1px solid #1a1a25}
+.bot-row:last-child{border:none}
+.bot-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.bot-icon.safe{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2)}
+.bot-icon.danger{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2)}
+.bot-icon.warn{background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.2)}
+.bot-info{flex:1}
+.bot-info .name{font-weight:600;font-size:.9rem}
+.bot-info .desc{color:var(--dim);font-size:.78rem}
+.bot-status{font-size:.7rem;font-family:'JetBrains Mono',monospace;padding:.25rem .6rem;border-radius:4px;font-weight:600}
+.bot-status.safe{color:var(--green);background:rgba(34,197,94,.1)}
+.bot-status.danger{color:var(--red);background:rgba(239,68,68,.1)}
+.bot-status.warn{color:var(--orange);background:rgba(249,115,22,.1)}
+
+.audit-section{max-width:700px;width:90%;margin:4rem auto;animation:fadeInUp .6s ease-out .4s both}
+.audit-section h2{font-size:1.4rem;margin-bottom:1.5rem;text-align:center}
+.audit-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem}
+.audit-card{background:var(--card);border:1px solid #1e1e2e;border-radius:12px;padding:1.5rem;text-align:center;transition:all .3s;position:relative;overflow:hidden}
+.audit-card:hover{border-color:rgba(42,171,238,.3);transform:translateY(-3px);box-shadow:0 12px 32px rgba(42,171,238,.08)}
+.audit-card .val{font-size:2rem;font-weight:700;font-family:'JetBrains Mono',monospace;margin-bottom:.3rem}
+.audit-card .lbl{font-size:.78rem;color:var(--dim)}
+.audit-card.good .val{color:var(--green)}
+.audit-card.bad .val{color:var(--red)}
+.audit-card.mid .val{color:var(--tg)}
+
+footer{text-align:center;padding:3rem 1rem;border-top:1px solid #1e1e2e;color:var(--dim);font-size:.85rem}
+footer a{color:var(--tg)}
+</style>
+</head>
+<body>
+<section class="hero">
+<h1>&#128752; TGGuard</h1>
+<p>Telegram security monitoring. Detect malicious bots, audit group privacy, and protect your chats from social engineering.</p>
+<div class="badge">Bot Detection &bull; Privacy Audit &bull; Open Source</div>
+</section>
+
+<section class="chat-section">
+<h2>Real-Time Chat Monitoring</h2>
+<div class="chat-window">
+<div class="chat-header">
+<div class="avatar">&#128172;</div>
+<div><div class="name">Tech Community Group</div><div class="status">42 members online</div></div>
+</div>
+<div class="chat-body">
+<div class="msg right">Hey everyone, has anyone tried the new API?</div>
+<div class="msg left"><div class="sender">@alice_dev</div>Yes, it's great! Documentation is solid.</div>
+<div class="msg left"><div class="sender">@suspicious_bot_88</div>Join my airdrop! Click here: bit.ly/f4k3</div>
+<div class="msg alert"><div class="alert-badge">&#9888; Suspicious Link Detected</div>TGGuard flagged a phishing URL from <strong>@suspicious_bot_88</strong>. Message hidden from group.</div>
+<div class="msg left"><div class="sender">@bob_sec</div>Thanks TGGuard! That account was created 2 hours ago with no profile pic.</div>
+</div>
+</div>
+</section>
+
+<section class="bot-section">
+<h2>Bot Detection Scan</h2>
+<div class="bot-vis">
+<div class="bot-row"><div class="bot-icon safe">&#9989;</div><div class="bot-info"><div class="name">@GroupHelpBot</div><div class="desc">Admin tool, verified, 120k users</div></div><div class="bot-status safe">SAFE</div></div>
+<div class="bot-row"><div class="bot-icon danger">&#9888;</div><div class="bot-info"><div class="name">@airdrop_free_2024</div><div class="desc">Created 2h ago, mass-DMs, phishing links</div></div><div class="bot-status danger">DANGER</div></div>
+<div class="bot-row"><div class="bot-icon safe">&#9989;</div><div class="bot-info"><div class="name">@vote_bot</div><div class="desc">Polling bot, open-source, 8k users</div></div><div class="bot-status safe">SAFE</div></div>
+<div class="bot-row"><div class="bot-icon warn">&#9888;</div><div class="bot-info"><div class="name">@new_user_bot</div><div class="desc">Unknown source, requests file access</div></div><div class="bot-status warn">REVIEW</div></div>
+<div class="bot-row"><div class="bot-icon danger">&#9888;</div><div class="bot-info"><div class="name">@crypto_signalss</div><div class="desc">Pump-and-dump scam, fake testimonials</div></div><div class="bot-status danger">DANGER</div></div>
+</div>
+</section>
+
+<section class="audit-section">
+<h2>Privacy Audit Dashboard</h2>
+<div class="audit-grid">
+<div class="audit-card good"><div class="val">92%</div><div class="lbl">Privacy Score</div></div>
+<div class="audit-card mid"><div class="val">5</div><div class="lbl">Active Bots</div></div>
+<div class="audit-card bad"><div class="val">2</div><div class="lbl">Flagged Bots</div></div>
+<div class="audit-card good"><div class="val">Off</div><div class="lbl">Forward Privacy</div></div>
+<div class="audit-card mid"><div class="val">3</div><div class="lbl">Public Groups</div></div>
+<div class="audit-card good"><div class="val">On</div><div class="lbl">Two-Step Auth</div></div>
+</div>
+</section>
+
+<footer>
+<p>Protecting Telegram communities &bull; <a href="https://github.com" target="_blank">View on GitHub</a></p>
+</footer>
+</body>
+</html>

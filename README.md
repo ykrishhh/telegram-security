@@ -15,6 +15,7 @@ Telegram security monitoring, bot detection, channel analysis, and privacy audit
 
 ## Table of Contents
 
+- [Why This Exists](#why-this-exists)
 - [Features](#features)
 - [Installation](#installation)
 - [Bot Detection](#bot-detection)
@@ -27,6 +28,12 @@ Telegram security monitoring, bot detection, channel analysis, and privacy audit
 - [Python Scripts](#python-scripts)
 - [Disclaimer](#disclaimer)
 - [License](#license)
+
+---
+
+## Why This Exists
+
+Telegram is great for a lot of things, but privacy isn't exactly its strong suit unless you use secret chats. I kept running into the same problems: bot-spam in channels, session files sitting on disk in plaintext, privacy settings I couldn't figure out without digging through API docs. So I built tools to make this stuff easier.
 
 ---
 
@@ -79,6 +86,8 @@ Obtain `API_ID` and `API_HASH` from [my.telegram.org](https://my.telegram.org).
 ## Bot Detection
 
 ### Analyze User Behavior Patterns
+
+The scoring system here is heuristic — it's not perfect, but it catches most automated accounts. The timing regularity check is the most reliable signal. Real humans don't post at exactly 300-second intervals.
 
 ```python
 #!/usr/bin/env python3
@@ -208,6 +217,8 @@ if __name__ == "__main__":
 
 ### Metadata and Growth Auditor
 
+This pulls channel metadata and recent messages to look for signs of fake subscribers or automated posting. If a channel has 100k followers but gets 50 views per post, something's off.
+
 ```python
 #!/usr/bin/env python3
 """
@@ -299,6 +310,8 @@ if __name__ == "__main__":
 ## Privacy Audit
 
 ### Account Exposure Check
+
+Most people don't realize their phone number is visible to everyone by default. This script checks all your privacy settings and flags the risky ones.
 
 ```python
 #!/usr/bin/env python3
@@ -407,6 +420,8 @@ if __name__ == "__main__":
 ## Session Security
 
 ### Detect and Revoke Unauthorized Sessions
+
+I run this monthly. It's eye-opening how many sessions pile up — old phones, web clients you forgot about, that one time you logged in from a friend's laptop. Kill the ones you don't recognize.
 
 ```python
 #!/usr/bin/env python3
@@ -525,6 +540,8 @@ if __name__ == "__main__":
 
 ### Credential Storage
 
+Your API credentials shouldn't live in plaintext in a `.env` file on a shared server. This encrypts them with AES-256-GCM behind a master password.
+
 ```python
 #!/usr/bin/env python3
 """
@@ -597,6 +614,8 @@ def load_credentials(master_password: str) -> dict:
 | Usage metadata | Yes | Indefinite |
 | Message content | Cloud chats: Yes | Until deleted |
 | Message content | Secret chats: No | End-to-end encrypted |
+
+This is the part most people don't want to hear. Telegram stores your cloud chat content on their servers. It's encrypted in transit and at rest, but Telegram holds the keys. Secret chats are different — those are truly end-to-end encrypted and never touch Telegram's servers.
 
 ### Risk Mitigation Steps
 
